@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DiceMint</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 60px;
+      overflow: hidden;
+    }
+    .top-bar {
+      width: 100%;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .top-bar span {
+      font-size: 1.2em;
+      background-color: #222;
+      padding: 8px 14px;
+      border-radius: 20px;
+    }
+    .page { display: none; padding: 20px; flex-grow: 1; overflow-y: auto; }
+    .page.active { display: block; }
+    h1 { text-align: center; margin-bottom: 15px; }
+    #coin-count {
+      text-align: center;
+      font-size: 1.5em;
+      margin-bottom: 10px;
+    }
+    #tap-button {
+      display: block;
+      margin: 20px auto;
+      padding: 20px 40px;
+      font-size: 1.2em;
+      border: none;
+      border-radius: 10px;
+      background-color: #ffcc00;
+      color: #000;
+      cursor: pointer;
+      box-shadow: 0 5px #c9a000;
+    }
+    #tap-button:active {
+      transform: scale(0.95);
+      box-shadow: 0 2px #c9a000;
+    }
+    #message {
+      text-align: center;
+      margin-top: 10px;
+      color: yellow;
+      font-size: 1.1em;
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background-color: #111;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+      border-top: 1px solid #333;
+    }
+    .bottom-nav button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.2em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+    }
+    .bottom-nav button span {
+      font-size: 0.75em;
+      margin-top: 4px;
+    }
+    .section-title {
+      font-size: 1.4em;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    input, select {
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      background: #333;
+      color: #fff;
+      margin: 10px 0;
+      width: 100%;
+    }
+    button.bet-btn {
+      background: #00ff99;
+      color: #000;
+      padding: 10px;
+      border-radius: 8px;
+      width: 100%;
+      margin-top: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #dice {
+      display: block;
+      margin: 20px auto;
+      width: 100px;
+      height: 100px;
+      background: white;
+      border-radius: 15px;
+      transition: transform 0.5s ease;
+    }
+    .dot { fill: #000; }
+    #bet-result {
+      margin-top: 15px;
+      background: #222;
+      padding: 10px;
+      border-left: 4px solid #00ff99;
+      border-radius: 6px;
+      text-align: center;
+    }
+    #deposit-icon {
+      font-size: 1.5em;
+      text-decoration: none;
+      margin-right: auto;
+      margin-left: 10px;
+      background: #00ff99;
+      padding: 6px 12px;
+      border-radius: 20px;
+      color: #000;
+      font-weight: bold;
+    }
+    @keyframes roll {
+      0%   { transform: rotate(0deg); }
+      50%  { transform: rotate(360deg); }
+      100% { transform: rotate(720deg); }
+    }
+  </style>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div class="top-bar">
+    <a href="deposit.html" id="deposit-icon" title="Deposit"><p>Add coins ➕</p></a>
+    <span>💰 $<span id="balance">0.00</span></span>
+  </div>
+
+  <!-- BET PAGE -->
+  <div id="home" class="page active">
+    <h1>🎲 DiceMint - Bet & Win</h1>
+    <input type="number" id="betAmount" placeholder="Enter bet amount ($)" min="0.01" step="0.01" />
+    <select id="guessNumber">
+      <option value="">Guess Dice (1–6)</option>
+      <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+      <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+    </select>
+    <button class="bet-btn" onclick="playBet()">Roll Dice & Bet</button>
+    <svg id="dice" width="100" height="100"></svg>
+    <div id="bet-result"></div>
+  </div>
+
+  <!-- BONUS PAGE -->
+  <div id="bonus" class="page">
+    <div class="section-title">🎁 Claim $10 Bonus</div>
+    <p style="text-align:center;">Join our Telegram group and channel to receive $10 in your DiceMint wallet.</p>
+    <p style="text-align:center; margin-top: 10px;">
+      <a href="https://t.me/cryptoprojectggl/150" target="_blank" onclick="groupClicked = true; checkLinks()" style="color: #00ff99;">📢 Join Group</a><br/>
+      <a href="https://t.me/vercrypaders/33" target="_blank" onclick="channelClicked = true; checkLinks()" style="color: #00ff99;">📣 Join Channel</a>
+    </p>
+    <button id="claim-btn" disabled style="display: block; margin: 20px auto; background: gray; color: #fff; padding: 10px; border: none; border-radius: 8px;">✅ I've Joined - Claim $10</button>
+    <div id="bonus-message" style="text-align:center; margin-top:10px;"></div>
+  </div>
+
+  <!-- TAP PAGE -->
+  <div id="settings" class="page">
+    <div class="section-title">💸 Tap & Earn</div>
+    <div id="coin-count">Coins: 0</div>
+    <button id="tap-button">Tap to Earn</button>
+    <div id="message"></div>
+  </div>
+
+  <!-- REFER PAGE -->
+  <div id="refer" class="page">
+    <div class="section-title">🤝 Refer & Earn $5</div>
+    <p style="text-align: center;">Invite your friends...<br><br>🔗 Your Referral Link:</p>
+    <input type="text" id="refLink" readonly style="text-align:center;" />
+    <button onclick="copyRefLink()" style="margin: 10px auto; display:block; background:#00ff99; color:#000; padding:10px; border:none; border-radius:8px;">
+      📋 Copy Link
+    </button>
+    <p id="copyMsg" style="text-align:center; font-size: 0.9em;"></p>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <button onclick="showPage('home')">🎲<span>Bet</span></button>
+    <a href="withdraw.html" style="text-decoration: none;">
+      <button style="background: none; border: none; color: white; font-size: 1.2em; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+        💵<span style="font-size: 0.75em; margin-top: 4px;">Withdraw</span>
+      </button>
+    </a>
+    <button onclick="showPage('bonus')">🎁<span>Claim</span></button>
+    <a href="about.html" style="text-decoration: none;">
+      <button style="background: none; border: none; color: white; font-size: 1.2em; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+        📖<span style="font-size: 0.75em; margin-top: 4px;">About</span>
+      </button>
+    </a>
+    <button onclick="showPage('settings')">💸<span>Earn</span></button>
+    <button onclick="showPage('refer')">🤝<span>Refer</span></button>
+  </div>
+
+  <!-- JS -->
+  <script src="index.js"></script>
+</body>
+</html>
