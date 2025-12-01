@@ -19,7 +19,11 @@
 }
 
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:linear-gradient(180deg,#031022,#07162a);color:#e8f3ff;}
+body{
+  margin:0;height:100%;
+  background:linear-gradient(180deg,#031022,#07162a);
+  color:#e8f3ff;
+}
 
 .wrap{max-width:430px;margin:40px auto;padding:20px;text-align:center;}
 
@@ -55,10 +59,9 @@ h1{margin:0;font-size:22px;font-weight:700;}
   cursor:pointer;
 }
 .option:hover{background:rgba(255,255,255,0.05);}
-
 .option img{width:38px;height:38px;border-radius:10px;}
-.option .t1{font-weight:700;}
-.option .t2{font-size:12px;color:var(--muted);}
+.option .t1{font-weight:700; font-size:20px;}
+.option .t2{font-size:12px;color:var(--muted); color:blue;}
 
 #status{
   margin-top:20px;
@@ -79,111 +82,148 @@ h1{margin:0;font-size:22px;font-weight:700;}
 
   <div class="card">
     <button class="wallet-button" id="connectMain">
-      <i class="fa-solid fa-plug"></i> Connect Wallet
     </button>
 
     <div style="margin-top:18px;font-weight:700;color:var(--muted)">Or Choose Wallet</div>
 
     <!-- MetaMask -->
+    <button class="wallet-button">
     <div class="option" id="connectMetaMask">
-      <img src="https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png">
+         <i class="fa-solid fa-plug"></i>
       <div>
-        <div class="t1">MetaMask</div>
+        <div class="t1">Connect Wallet</div>
+            </div>
         <div class="t2">Browser Extension</div>
       </div>
-    </div>
-
-    <!-- Trust Wallet (WalletConnect) -->
-    <div class="option" id="connectTrust">
-      <img src="https://trustwallet.com/assets/images/media/assets/TWT.png">
-      <div>
-        <div class="t1">Trust Wallet</div>
-        <div class="t2">Mobile Wallet (WalletConnect)</div>
-      </div>
-    </div>
-
-    <!-- WalletConnect -->
-    <div class="option" id="connectWC">
-      <img src="https://avatars.githubusercontent.com/u/37784886?s=200&v=4">
-      <div>
-        <div class="t1">WalletConnect</div>
-        <div class="t2">Scan with any wallet</div>
-      </div>
-    </div>
-
-    <!-- Status / Balance -->
+    </button>
     <div id="status"></div>
   </div>
 
   <div class="footer">Netradapps • Secure Web3 Dashboard</div>
 </div>
-
 <script>
-let provider, signer, address;
+  let provider, signer, address;
 
-// Display messages in-page
-function showStatus(message, isError=false){
-  const statusEl = document.getElementById("status");
-  statusEl.textContent = message;
-  statusEl.style.color = isError ? "#ff5c5c" : "var(--accent)";
+/* ------------------------------
+    STATUS MESSAGE
+------------------------------ */
+function showStatus(message, isError = false) {
+  const el = document.getElementById("status");
+  el.textContent = message;
+  el.style.color = isError ? "#ff5c5c" : "var(--accent)";
 }
 
-// Get balance in ETH
-async function displayBalance(){
-  try{
-    const balance = await provider.getBalance(address);
-    const ethBalance = ethers.formatEther(balance);
-    showStatus(`Connected: ${address}\nBalance: ${parseFloat(ethBalance).toFixed(4)} ETH`);
-  }catch(err){
-    showStatus("Failed to get balance: " + err.message, true);
-  }
+/* ------------------------------
+    POPUP AFTER CONNECT
+------------------------------ */
+async function openTradePopup() {
+  const balance = await provider.getBalance(address);
+  const ethBalance = ethers.formatEther(balance);
+  const userBalance = parseFloat(ethBalance).toFixed(6);
+
+  const popup = document.createElement("div");
+  popup.style.cssText = `
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,0.7);
+    display:flex;align-items:center;justify-content:center;
+    z-index:9999;
+  `;
+
+  popup.innerHTML = `
+    <div style="
+      background:#0d1624;padding:24px;border-radius:16px;
+      width:90%;max-width:360px;text-align:center;color:#fff;
+      box-shadow:0 10px 30px rgba(0,0,0,0.4);
+    ">
+      <h2 style="margin:0;font-size:20px;">Wallet Connected</h2>
+      <p style="font-size:13px;color:#9fb0c9;margin-top:10px;">
+        ${address.substring(0,6)}...${address.substring(address.length-4)}
+      </p>
+
+      <p style="margin-top:10px;font-size:16px;font-weight:700;color:#18d884;">
+        Balance: ${userBalance} ETH
+      </p>
+
+      <div style="margin-top:16px;text-align:left;font-size:14px;">
+        <label>Enter amount to trade:</label>
+        <input id="tradeAmount" type="number" step="0.0001" min="0"
+          value="${userBalance}"
+          style="width:100%;padding:10px;margin-top:6px;
+          border-radius:10px;border:none;background:#112033;color:#fff;"
+        />
+      </div>
+
+      <button id="confirmTrade" style="
+        margin-top:18px;width:100%;padding:12px;
+        background:linear-gradient(90deg,#18d884,#21a7ff);
+        border:none;border-radius:12px;font-size:16px;
+        color:#06251a;font-weight:700;cursor:pointer;
+      ">Continue</button>
+
+      <button id="closePopup" style="
+        margin-top:10px;width:100%;padding:10px;
+        background:#222;border:1px solid #444;
+        border-radius:10px;color:#ccc;cursor:pointer;
+        font-size:14px;
+      ">Cancel</button>
+    </div>
+  `;
+
+  document.body.appendChild(popup);
+
+  document.getElementById("closePopup").onclick = () => popup.remove();
+
+  document.getElementById("confirmTrade").onclick = () => {
+    const amount = document.getElementById("tradeAmount").value;
+    alert("Amount chosen: " + amount + " ETH\nNext step: trading process.");
+    popup.remove();
+  };
 }
 
-/* -----------------------------
-   META MASK CONNECTION
------------------------------ */
-async function useMetaMask(){
-  try{
-    if (!window.ethereum) throw new Error("MetaMask not detected. Please install it.");
+/* ------------------------------
+    METAMASK
+------------------------------ */
+async function useMetaMask() {
+  try {
+    if (!window.ethereum) throw new Error("MetaMask not found.");
     provider = new ethers.BrowserProvider(window.ethereum);
-    await provider.send("eth_requestAccounts",[]);
+    await provider.send("eth_requestAccounts", []);
     signer = await provider.getSigner();
     address = await signer.getAddress();
-    await displayBalance();
-  }
-  catch(err){
-    showStatus("MetaMask Error: " + err.message + "\nTry refreshing the page or checking your wallet.", true);
+    await openTradePopup();
+  } catch (err) {
+    showStatus("MetaMask Error: " + err.message, true);
   }
 }
 
-/* -----------------------------
-   WALLETCONNECT (Trust Wallet Compatible)
------------------------------ */
-async function useWalletConnect(){
-  try{
-    const core = new window.Web3Modal.StandaloneModal({
-      projectId: "demo" // replace with your own
+/* ------------------------------
+    WALLETCONNECT (for mobile & standalone)
+------------------------------ */
+async function useWalletConnect() {
+  try {
+    const wc = new window.Web3ModalStandalone.StandaloneModal({
+      projectId: "YOUR_PROJECT_ID", // <-- Replace with your real WalletConnect Project ID
+      themeMode: "dark"
     });
 
-    const instance = await core.connect();
+    const instance = await wc.connect();
+
     provider = new ethers.BrowserProvider(instance);
     signer = await provider.getSigner();
     address = await signer.getAddress();
-    await displayBalance();
-  }
-  catch(err){
-    showStatus("WalletConnect Error: " + err.message + "\nTry scanning again or use a different wallet.", true);
+    await openTradePopup();
+  } catch (err) {
+    showStatus("WalletConnect Error: " + err.message, true);
   }
 }
 
-/* -----------------------------
-   UI EVENTS
------------------------------ */
+/* ------------------------------
+    BUTTON EVENTS
+------------------------------ */
 document.getElementById("connectMain").onclick = useWalletConnect;
 document.getElementById("connectMetaMask").onclick = useMetaMask;
 document.getElementById("connectTrust").onclick = useWalletConnect;
 document.getElementById("connectWC").onclick = useWalletConnect;
 </script>
-
 </body>
 </html>
