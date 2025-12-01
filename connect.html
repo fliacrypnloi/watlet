@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Netradapps — Connect Wallet</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.8.0/dist/ethers.umd.min.js"></script>
+<script src="https://unpkg.com/@walletconnect/web3modal@2.6.9/dist/index.umd.js"></script>
+<script src="https://unpkg.com/@web3modal/standalone@2.1.0/dist/index.umd.js"></script>
+
+<style>
+:root{
+  --bg:#061125; --panel:#0d1624; --muted:#9fb0c9; 
+  --accent:#18d884; --glass:rgba(255,255,255,0.03);
+  --card-shadow:0 8px 26px rgba(2,8,23,0.7);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:linear-gradient(180deg,#031022,#07162a);color:#e8f3ff;}
+
+.wrap{max-width:430px;margin:40px auto;padding:20px;text-align:center;}
+
+.logo-box{
+  width:70px;height:70px;border-radius:16px;
+  background:linear-gradient(135deg,#12b886,#15a0ff);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;font-weight:800;color:#071720;
+  margin:0 auto 14px auto;
+}
+
+h1{margin:0;font-size:22px;font-weight:700;}
+.sub{font-size:14px;color:var(--muted);margin-top:6px;}
+
+.card{
+  margin-top:26px;background:var(--glass);
+  padding:20px;border-radius:16px;box-shadow:var(--card-shadow);
+  backdrop-filter:blur(8px);
+}
+
+.wallet-button{
+  padding:14px;border-radius:12px;margin-top:12px;width:100%;
+  background:linear-gradient(90deg,var(--accent),#21a7ff);
+  border:none;font-size:16px;color:#06251a;
+  cursor:pointer;font-weight:700;
+}
+
+.option{
+  display:flex;gap:14px;align-items:center;
+  padding:12px;border-radius:12px;margin-top:12px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.03);
+  cursor:pointer;
+}
+.option:hover{background:rgba(255,255,255,0.05);}
+
+.option img{width:38px;height:38px;border-radius:10px;}
+.option .t1{font-weight:700;}
+.option .t2{font-size:12px;color:var(--muted);}
+
+#status{
+  margin-top:20px;
+  font-size:14px;
+  font-weight:600;
+  color:var(--accent);
+}
+
+.footer{margin-top:26px;color:var(--muted);font-size:12px;}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="logo-box">ND</div>
+  <h1>Connect Your Wallet</h1>
+  <div class="sub">Use Trust Wallet, MetaMask, WalletConnect or any Web3 wallet.</div>
+
+  <div class="card">
+    <button class="wallet-button" id="connectMain">
+      <i class="fa-solid fa-plug"></i> Connect Wallet
+    </button>
+
+    <div style="margin-top:18px;font-weight:700;color:var(--muted)">Or Choose Wallet</div>
+
+    <!-- MetaMask -->
+    <div class="option" id="connectMetaMask">
+      <img src="https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png">
+      <div>
+        <div class="t1">MetaMask</div>
+        <div class="t2">Browser Extension</div>
+      </div>
+    </div>
+
+    <!-- Trust Wallet (WalletConnect) -->
+    <div class="option" id="connectTrust">
+      <img src="https://trustwallet.com/assets/images/media/assets/TWT.png">
+      <div>
+        <div class="t1">Trust Wallet</div>
+        <div class="t2">Mobile Wallet (WalletConnect)</div>
+      </div>
+    </div>
+
+    <!-- WalletConnect -->
+    <div class="option" id="connectWC">
+      <img src="https://avatars.githubusercontent.com/u/37784886?s=200&v=4">
+      <div>
+        <div class="t1">WalletConnect</div>
+        <div class="t2">Scan with any wallet</div>
+      </div>
+    </div>
+
+    <!-- Status / Balance -->
+    <div id="status"></div>
+  </div>
+
+  <div class="footer">Netradapps • Secure Web3 Dashboard</div>
+</div>
+
+<script>
+let provider, signer, address;
+
+// Display messages in-page
+function showStatus(message, isError=false){
+  const statusEl = document.getElementById("status");
+  statusEl.textContent = message;
+  statusEl.style.color = isError ? "#ff5c5c" : "var(--accent)";
+}
+
+// Get balance in ETH
+async function displayBalance(){
+  try{
+    const balance = await provider.getBalance(address);
+    const ethBalance = ethers.formatEther(balance);
+    showStatus(`Connected: ${address}\nBalance: ${parseFloat(ethBalance).toFixed(4)} ETH`);
+  }catch(err){
+    showStatus("Failed to get balance: " + err.message, true);
+  }
+}
+
+/* -----------------------------
+   META MASK CONNECTION
+----------------------------- */
+async function useMetaMask(){
+  try{
+    if (!window.ethereum) throw new Error("MetaMask not detected. Please install it.");
+    provider = new ethers.BrowserProvider(window.ethereum);
+    await provider.send("eth_requestAccounts",[]);
+    signer = await provider.getSigner();
+    address = await signer.getAddress();
+    await displayBalance();
+  }
+  catch(err){
+    showStatus("MetaMask Error: " + err.message + "\nTry refreshing the page or checking your wallet.", true);
+  }
+}
+
+/* -----------------------------
+   WALLETCONNECT (Trust Wallet Compatible)
+----------------------------- */
+async function useWalletConnect(){
+  try{
+    const core = new window.Web3Modal.StandaloneModal({
+      projectId: "demo" // replace with your own
+    });
+
+    const instance = await core.connect();
+    provider = new ethers.BrowserProvider(instance);
+    signer = await provider.getSigner();
+    address = await signer.getAddress();
+    await displayBalance();
+  }
+  catch(err){
+    showStatus("WalletConnect Error: " + err.message + "\nTry scanning again or use a different wallet.", true);
+  }
+}
+
+/* -----------------------------
+   UI EVENTS
+----------------------------- */
+document.getElementById("connectMain").onclick = useWalletConnect;
+document.getElementById("connectMetaMask").onclick = useMetaMask;
+document.getElementById("connectTrust").onclick = useWalletConnect;
+document.getElementById("connectWC").onclick = useWalletConnect;
+</script>
+
+</body>
+</html>
